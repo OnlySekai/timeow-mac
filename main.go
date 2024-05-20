@@ -12,7 +12,8 @@ import (
 )
 
 type app struct {
-	isPro bool
+	isPro                  bool
+	webhookAddActivePeriod string
 
 	maxAllowedIdleTime time.Duration
 	keepTimeLogsFor    time.Duration
@@ -47,7 +48,8 @@ func main() {
 	notifierInstance := notifier.GetInstance()
 	defaults := *userdefaults.Defaults()
 	app := app{
-		isPro: true,
+		isPro:                  true,
+		webhookAddActivePeriod: defaults.String(webhookAddActivePeriodKey),
 
 		maxAllowedIdleTime: time.Minute * time.Duration(
 			defaults.Integer(maxAllowedIdleTimeKey),
@@ -80,6 +82,10 @@ func main() {
 
 	if app.keepTimeLogsFor == 0 {
 		app.setKeepTimeLogsFor(int(defaultKeepTimeLogsFor.Minutes()))
+	}
+
+	if app.webhookAddActivePeriod == "" {
+		app.setWebhookAddActivePeriod(defaultWebhookAddActivePeriod)
 	}
 
 	breaks, err := app.readPeriodsFromStorage(breaksKey)

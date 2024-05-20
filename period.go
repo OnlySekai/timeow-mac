@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/getlantern/systray"
@@ -9,8 +12,9 @@ import (
 )
 
 type period struct {
-	Start time.Time `json:"start"`
-	End   time.Time `json:"end"`
+	Start    time.Time `json:"start"`
+	End      time.Time `json:"end"`
+	IsSynced bool      `json:"is_synced"`
 }
 
 func (p *period) duration() time.Duration {
@@ -47,7 +51,39 @@ func (a *app) readPeriodsFromStorage(key string) ([]period, error) {
 }
 
 func (a *app) savePeriodsToStorage(key string, periods []period) error {
+	// make http request POST to localhost 8000 with body is periods when key is activePeriodsKey
+	if key == activePeriodsKey && a.webhookAddActivePeriod != "" {
+		a.syncPeriods(periods)
+	}
 	return a.defaults.Marshal(key, periods)
+}
+
+func (a *app) syncPeriods(periods []period) {
+	var unsyncedPeriods []period
+	for _, p := range periods {
+		if !p.IsSynced {
+			unsyncedPeriods = append(unsyncedPeriods, p)
+
+		}
+	}
+	if len(unsyncedPeriods) <= 0 {
+		return
+	}
+	payload, err := json.Marshal(unsyncedPeriods)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+	resp, err := http.Post(a.webhookAddActivePeriod, "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+	// set is_synced to true for all periods
+	for i := range periods {
+		periods[i].IsSynced = true
+	}
+	defer resp.Body.Close()
 }
 
 func updatePeriodMenuItems(

@@ -8,6 +8,7 @@ const idleListenerInterval = time.Second
 const timeLogCleanerInterval = time.Minute * 30
 const appLabel = "com.timeow.timeow-mac"
 const appName = "Timeow"
+const defaultWebhookAddActivePeriod = ""
 const defaultMaxAllowedIdleTime time.Duration = time.Minute * 3
 const defaultKeepTimeLogsFor time.Duration = time.Hour * 24
 const minAllowedActiveTime time.Duration = time.Minute
@@ -17,6 +18,7 @@ const maxAllowedIdleTimeKey = "maxAllowedIdleTime"
 const keepTimeLogsForKey = "keepTimeLogsFor"
 const breaksKey = "breaks"
 const activePeriodsKey = "activePeriods"
+const webhookAddActivePeriodKey = "webhookAddActivePeriod"
 
 const hourInMinutes = 60
 const dayInMinutes = hourInMinutes * 24
