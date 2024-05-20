@@ -26,6 +26,11 @@ func (a *app) setKeepTimeLogsFor(minutes int) {
 	a.defaults.SetInteger(keepTimeLogsForKey, minutes)
 }
 
+func (a *app) setWebhookAddActivePeriod(url string) {
+	a.webhookAddActivePeriod = url
+	a.defaults.SetString(webhookAddActivePeriodKey, url)
+}
+
 // This function exists because time.Sub behaves strangely after the machine wakes up from sleep.
 func calculateDuration(start, end time.Time) time.Duration {
 	startSeconds := start.Unix()

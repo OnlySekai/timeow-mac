@@ -11,8 +11,9 @@ func (a *app) addActivePeriodEntry(start, end time.Time) {
 	}
 
 	entry := period{
-		Start: start,
-		End:   end,
+		Start:    start,
+		End:      end,
+		IsSynced: false,
 	}
 
 	a.activePeriods = append(a.activePeriods, entry)

@@ -58,7 +58,7 @@ func (a *app) onSystrayReady() {
 		"",
 		a.startup.RunningAtStartup(),
 	)
-
+	mChangeWebHookAddActivePeriod := mPreferences.AddSubMenuItem("Enter Webhook URL", "Enter the URL of the webhook")
 	createMinutesSelectionItems := func(
 		menuItem *systray.MenuItem,
 		selectedItem time.Duration,
@@ -130,6 +130,8 @@ func (a *app) onSystrayReady() {
 				a.handleAboutClicked()
 			case <-mQuit.ClickedCh:
 				a.handleQuitClicked()
+			case <-mChangeWebHookAddActivePeriod.ClickedCh:
+				a.handleChangeWebHookAddActivePeriodClicked()
 			}
 		}
 	}()
