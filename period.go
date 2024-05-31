@@ -34,12 +34,17 @@ func (p *period) string() string {
 	if duration > time.Hour {
 		limit = 2
 	}
+	syncedString := ""
+	if p.IsSynced {
+		syncedString = " Synced"
+	}
 
 	return fmt.Sprintf(
-		"%s - %s (%s)",
+		"%s - %s (%s) %s",
 		p.Start.Format(format),
 		p.End.Format(format),
 		durafmt.Parse(duration).LimitFirstN(limit).String(),
+		syncedString,
 	)
 }
 
@@ -50,15 +55,16 @@ func (a *app) readPeriodsFromStorage(key string) ([]period, error) {
 	return periods, err
 }
 
-func (a *app) savePeriodsToStorage(key string, periods []period) error {
+func (a *app) savePeriodsToStorage(key string, periods []period) (error, error) {
 	// make http request POST to localhost 8000 with body is periods when key is activePeriodsKey
+	var syncedError error
 	if key == activePeriodsKey && a.webhookAddActivePeriod != "" {
-		a.syncPeriods(periods)
+		syncedError = a.syncPeriods(periods)
 	}
-	return a.defaults.Marshal(key, periods)
+	return syncedError, a.defaults.Marshal(key, periods)
 }
 
-func (a *app) syncPeriods(periods []period) {
+func (a *app) syncPeriods(periods []period) error {
 	var unsyncedPeriods []period
 	for _, p := range periods {
 		if !p.IsSynced {
@@ -67,23 +73,29 @@ func (a *app) syncPeriods(periods []period) {
 		}
 	}
 	if len(unsyncedPeriods) <= 0 {
-		return
+		return nil
 	}
 	payload, err := json.Marshal(unsyncedPeriods)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		return
+		return err
 	}
 	resp, err := http.Post(a.webhookAddActivePeriod, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		return
+		return err
+	}
+	if resp.StatusCode != http.StatusCreated {
+		err := fmt.Errorf("unexpected status code: %v", resp.Status)
+		fmt.Println(err)
+		return err
 	}
 	// set is_synced to true for all periods
 	for i := range periods {
 		periods[i].IsSynced = true
 	}
 	defer resp.Body.Close()
+	return nil
 }
 
 func updatePeriodMenuItems(
